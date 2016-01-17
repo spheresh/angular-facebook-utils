@@ -32,16 +32,19 @@
     "use strict";
     angular.module("facebookUtils").provider("facebookSDK", function() {
         var loadScript = function(d, cb) {
-            var js = d.createElement("script");
-            js.async = true;
-            js.src = "//connect.facebook.net/en_US/all.js";
-            js.onreadystatechange = function() {
-                if (this.readyState == "complete") {
-                    cb();
-                }
-            };
-            js.onload = cb;
-            d.getElementsByTagName("body")[0].appendChild(js);
+            (function(d, s, id){
+                var js, fjs = d.getElementsByTagName(s)[0];
+                if (d.getElementById(id)) {return;}
+                js = d.createElement(s); js.id = id;
+                js.src = "//connect.facebook.net/en_US/sdk.js";
+                js.onreadystatechange = function() {
+                    if (this.readyState == "complete") {
+                        cb();
+                    }
+                };
+                js.onload = cb;
+                fjs.parentNode.insertBefore(js, fjs);
+            }(document, 'script', 'facebook-jssdk'));
         };
         this.$get = [ "$q", "facebookConfigDefaults", "facebookConfigSettings", "$timeout", function($q, facebookConfigDefaults, facebookConfigSettings, $timeout) {
             var deferred = $q.defer();
@@ -51,6 +54,8 @@
                 loadScript(document, function(callback) {
                     FB.init({
                         appId: facebookConfigSettings.appID,
+                        xfbml      : true,
+                        version    : 'v2.5',
                         channelUrl: facebookConfigSettings.channelFile || facebookConfigDefaults.channelFile,
                         status: true,
                         cookie: true
@@ -64,21 +69,24 @@
         } ];
     });
     "use strict";
-    angular.module("facebookUtils").service("facebookUser", [ "$window", "$rootScope", "$q", "facebookConfigDefaults", "facebookConfigSettings", "facebookSDK", function($window, $rootScope, $q, facebookConfigDefaults, facebookConfigSettings, facebookSDK) {
+    angular.module("facebookUtils").service("facebookUser", [ "$window", "$rootScope", "$q", "$timeout", "facebookConfigDefaults", "facebookConfigSettings", "facebookSDK", function($window, $rootScope, $q, $timeout, facebookConfigDefaults, facebookConfigSettings, facebookSDK) {
         var FacebookUser = function() {};
         var checkStatus = function() {
             var deferred = $q.defer();
             FB.getLoginStatus(function(response) {
-                $rootScope.$apply(function() {
-                    if (response.status === "connected") {
-                        user.loggedIn = true;
-                        $rootScope.$broadcast("fbLoginSuccess", response);
-                        deferred.resolve(response);
-                    } else {
-                        user.loggedIn = false;
-                        deferred.reject(response);
-                    }
+                $timeout(function() {
+                    $rootScope.$apply(function() {
+                        if (response.status === "connected") {
+                            user.loggedIn = true;
+                            $rootScope.$broadcast("fbLoginSuccess", response);
+                            deferred.resolve(response);
+                        } else {
+                            user.loggedIn = false;
+                            deferred.reject(response);
+                        }
+                    });
                 });
+
             }, true);
             return deferred.promise;
         };
