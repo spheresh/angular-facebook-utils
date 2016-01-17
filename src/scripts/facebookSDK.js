@@ -29,6 +29,8 @@ angular.module('facebookUtils')
           loadScript(document, function(callback) {
             FB.init({
               appId      : facebookConfigSettings.appID, // App ID
+              xfbml      : true,
+              version    : 'v2.5',
               channelUrl : facebookConfigSettings.channelFile || facebookConfigDefaults.channelFile, // Channel File
               status     : true, // check login status
               cookie     : true // enable cookies to allow the server to access the session

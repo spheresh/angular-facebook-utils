@@ -2,24 +2,27 @@
 
 angular.module('facebookUtils')
   .service('facebookUser', [
-    '$window', '$rootScope', '$q', 'facebookConfigDefaults', 'facebookConfigSettings', 'facebookSDK',
-    function($window, $rootScope, $q, facebookConfigDefaults, facebookConfigSettings, facebookSDK) {
+    '$window', '$rootScope', '$q', '$timeout', 'facebookConfigDefaults', 'facebookConfigSettings', 'facebookSDK',
+    function($window, $rootScope, $q, $timeout, facebookConfigDefaults, facebookConfigSettings, facebookSDK) {
 
       var FacebookUser = function(){};
 
       var checkStatus = function() {
         var deferred = $q.defer();
         FB.getLoginStatus(function(response) {
-          $rootScope.$apply(function() {
-            if (response.status === 'connected') {
-              user.loggedIn = true;
-              $rootScope.$broadcast('fbLoginSuccess', response);
-              deferred.resolve(response);
-            } else {
-              user.loggedIn = false;
-              deferred.reject(response);
-            }
+          $timeout(function() {
+            $rootScope.$apply(function() {
+              if (response.status === "connected") {
+                user.loggedIn = true;
+                $rootScope.$broadcast("fbLoginSuccess", response);
+                deferred.resolve(response);
+              } else {
+                user.loggedIn = false;
+                deferred.reject(response);
+              }
+            });
           });
+
         }, true);
 
         return deferred.promise;
